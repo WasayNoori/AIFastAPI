@@ -1,17 +1,17 @@
 from fastapi import FastAPI
 
-api=FastAPI()
+app=FastAPI()
 
 #GET,POST,PUT,DELETE
-@api.get("/")
+@app.get("/")
 def index():
     return {"message":"Hello World"}
 
-@api.get("/about")
+@app.get("/about")
 def about():
     return {"message":"About Page"}
 
-@api.get("/contact")
+@app.get("/contact")
 def contact():
     return {"message":"Contact Page"}
 
