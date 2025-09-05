@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+gunicorn
+slowapi
+pyjwt
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+
+
