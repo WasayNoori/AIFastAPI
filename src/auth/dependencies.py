@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .jwt_handler import JWTHandler
 from .azure_config import AzureKeyVaultConfig
+from ..services.blob_storage_service import BlobStorageService
 from typing import Dict, Any
 import logging
 
@@ -37,4 +38,19 @@ def get_current_app(credentials: HTTPAuthorizationCredentials = Depends(security
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials"
+        )
+
+
+def get_blob_storage_service() -> BlobStorageService:
+    """
+    Dependency to provide BlobStorageService instance.
+    Creates a new instance on each request for better error handling and isolation.
+    """
+    try:
+        return BlobStorageService()
+    except Exception as e:
+        logger.error(f"Failed to initialize BlobStorageService: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Blob Storage service is not available"
         )

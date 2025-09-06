@@ -33,3 +33,6 @@ class AzureKeyVaultConfig:
         except Exception:
             logger.info("JWT algorithm not found in Key Vault, using default HS256")
             return "HS256"
+    
+    def get_storage_account_url(self) -> str:
+        return self.get_secret("azure-storage-account-url")
