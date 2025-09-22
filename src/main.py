@@ -8,6 +8,7 @@ from src.services.blob_storage_service import BlobStorageService
 from passlib.context import CryptContext
 from pydantic import BaseModel
 import logging
+from src.secrets import get_secret
 
 # Configure logging
 logging.basicConfig(
@@ -35,7 +36,14 @@ app = FastAPI()
 #GET,POST,PUT,DELET
 @app.get("/")
 def index():
-    return {"message":"API is running"}
+    try:
+        secret = get_secret("test123")
+        return {"message":"API is running", "secret": secret}
+    except Exception as e:
+        logger.error(f"Error getting secret: {str(e)}")
+        return {"message":"API is running", "error": str(e)}
+
+    
 
 @app.get("/about")
 def about():
