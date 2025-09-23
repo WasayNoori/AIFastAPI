@@ -1,8 +1,9 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from .jwt_handler import JWTHandler
-from .azure_config import AzureKeyVaultConfig
+from ..services.azure_config import AzureKeyVaultConfig
 from ..services.blob_storage_service import BlobStorageService
+from ..translation.translationLangChain import TranslationLangChainService
 from typing import Dict, Any
 import logging
 
@@ -53,4 +54,19 @@ def get_blob_storage_service() -> BlobStorageService:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Blob Storage service is not available"
+        )
+
+
+def get_translation_service() -> TranslationLangChainService:
+    """
+    Dependency to provide TranslationLangChainService instance.
+    Creates a new instance on each request for better error handling and isolation.
+    """
+    try:
+        return TranslationLangChainService()
+    except Exception as e:
+        logger.error(f"Failed to initialize TranslationLangChainService: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Translation service is not available"
         )

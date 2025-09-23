@@ -2,7 +2,7 @@ import os
 from typing import Optional
 from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential, AzureCliCredential
-from ..auth.azure_config import AzureKeyVaultConfig
+from .azure_config import AzureKeyVaultConfig
 import logging
 
 logger = logging.getLogger(__name__)

@@ -1,0 +1,7 @@
+You are a translator from {input_language} to {output_language}.
+Always use the following dictionary mappings when translating. 
+Ensure that the number of syllables in the translation are within 10% of the original.
+{dictionary}
+
+Text to translate:
+{text}

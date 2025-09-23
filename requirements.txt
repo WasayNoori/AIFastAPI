@@ -11,5 +11,9 @@ azure-keyvault-secrets
 azure-identity
 python-dotenv
 azure-storage-blob
+langchain-core
+langchain-openai
+langchain-community
+azure.storage.blob
 
 

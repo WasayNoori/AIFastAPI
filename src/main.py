@@ -4,11 +4,13 @@ load_dotenv()
 from fastapi import FastAPI, Depends, HTTPException
 from datetime import datetime,timedelta
 from src.auth.dependencies import get_current_app, get_blob_storage_service, jwt_handler
+from src.services.azure_config import AzureKeyVaultConfig
 from src.services.blob_storage_service import BlobStorageService
 from passlib.context import CryptContext
 from pydantic import BaseModel
+from src.translation.scriptroutes import router as script_router
 import logging
-from src.secrets import get_secret
+
 
 # Configure logging
 logging.basicConfig(
@@ -32,12 +34,13 @@ class ListBlobsRequest(BaseModel):
     container_name: str
 
 app = FastAPI()
-
+app.include_router(script_router)
 #GET,POST,PUT,DELET
 @app.get("/")
 def index():
     try:
-        secret = get_secret("test123")
+        azure_config = AzureKeyVaultConfig()
+        secret = azure_config.get_secret("OPENAI-KEY")
         return {"message":"API is running", "secret": secret}
     except Exception as e:
         logger.error(f"Error getting secret: {str(e)}")
