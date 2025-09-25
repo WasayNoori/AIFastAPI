@@ -14,7 +14,7 @@ class BlobStorageService:
             self.account_url = account_url
         else:
             try:
-                azure_config = AzureKeyVaultConfig()
+                azure_config = AzureKeyVaultConfig("https://aifastapi.vault.azure.net")
                 self.account_url = azure_config.get_storage_account_url()
                 logger.info("Successfully retrieved storage account URL from Key Vault")
             except Exception as e:

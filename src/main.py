@@ -39,7 +39,7 @@ app.include_router(script_router)
 @app.get("/")
 def index():
     try:
-        azure_config = AzureKeyVaultConfig()
+        azure_config = AzureKeyVaultConfig("https://aifastapi.vault.azure.net")
         secret = azure_config.get_secret("OPENAI-KEY")
         return {"message":"API is running", "secret": secret}
     except Exception as e:

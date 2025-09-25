@@ -13,7 +13,7 @@ security = HTTPBearer()
 
 # Initialize Azure Key Vault and JWT handler
 try:
-    azure_config = AzureKeyVaultConfig()
+    azure_config = AzureKeyVaultConfig("https://aifastapi.vault.azure.net")
     jwt_secret = azure_config.get_jwt_secret()
     jwt_algorithm = azure_config.get_jwt_algorithm()
     jwt_handler = JWTHandler(jwt_secret, jwt_algorithm)
