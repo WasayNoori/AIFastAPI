@@ -4,7 +4,7 @@ from fastapi import HTTPException, status
 from typing import Dict, Any, Optional
 
 
-class JWTHandler:
+class JWTHandler: #this class is used to handle the JWT token
     def __init__(self, secret_key: str, algorithm: str = "HS256"):
         self.secret_key = secret_key
         self.algorithm = algorithm
