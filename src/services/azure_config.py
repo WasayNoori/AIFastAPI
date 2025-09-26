@@ -5,16 +5,29 @@ from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
-
+#testing
 
 class AzureKeyVaultConfig:
     def __init__(self, vault_url: Optional[str] = None):
-        self.vault_url = vault_url or os.getenv("AZURE_KEY_VAULT_URL")
+        logger.info(f"AzureKeyVaultConfig initializing...")
+        logger.info(f"Parameter vault_url: {vault_url}")
+
+        env_vault_url = os.getenv("AZURE_KEY_VAULT_URL")
+        logger.info(f"Environment AZURE_KEY_VAULT_URL: {env_vault_url}")
+
+        self.vault_url = vault_url or env_vault_url
+        logger.info(f"Final vault_url resolved to: {self.vault_url}")
+
         if not self.vault_url:
+            logger.error("FAILURE: No vault URL found from parameter or environment variable")
             raise ValueError("Azure Key Vault URL must be provided or set in AZURE_KEY_VAULT_URL environment variable")
-        
+
+        logger.info(f"SUCCESS: Using vault URL: {self.vault_url}")
+        logger.info("Initializing DefaultAzureCredential...")
         self.credential = DefaultAzureCredential()
+        logger.info("Creating SecretClient...")
         self.client = SecretClient(vault_url=self.vault_url, credential=self.credential)
+        logger.info("AzureKeyVaultConfig initialization complete")
     
     def get_secret(self, secret_name: str) -> str:
         try:
