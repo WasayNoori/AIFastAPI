@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 from azure.storage.blob import BlobServiceClient
-from azure.identity import DefaultAzureCredential, AzureCliCredential
+from azure.identity import DefaultAzureCredential
 from .azure_config import AzureKeyVaultConfig
 import logging
 
@@ -24,13 +24,10 @@ class BlobStorageService:
                     raise ValueError("Azure Storage Account URL must be provided via Key Vault secret 'azure-storage-account-url' or AZURE_STORAGE_ACCOUNT_URL environment variable")
                 logger.warning("Using fallback environment variable for storage account URL")
         
-        # Try AzureCliCredential first for local development
-        try:
-            self.credential = AzureCliCredential()
-            logger.info("Using AzureCliCredential for blob storage authentication")
-        except Exception as e:
-            logger.warning(f"AzureCliCredential failed, falling back to DefaultAzureCredential: {str(e)}")
-            self.credential = DefaultAzureCredential(logging_enable=True)
+        # Use DefaultAzureCredential which will try Managed Identity first in Azure, then fall back to other methods
+        logger.info("Initializing DefaultAzureCredential for blob storage authentication")
+        self.credential = DefaultAzureCredential(logging_enable=True)
+        logger.info("DefaultAzureCredential initialized successfully")
         logger.info(f"Initializing BlobServiceClient with account URL: {self.account_url}")
         self.blob_service_client = BlobServiceClient(
             account_url=self.account_url,
