@@ -4,6 +4,7 @@ from .jwt_handler import JWTHandler
 from ..services.azure_config import AzureKeyVaultConfig
 from ..services.blob_storage_service import BlobStorageService
 from ..translation.translationLangChain import TranslationLangChainService
+from ..translation.summarizeLangChain import SummarizeLangChainService
 from typing import Dict, Any
 import logging
 
@@ -69,4 +70,19 @@ def get_translation_service() -> TranslationLangChainService:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Translation service is not available"
+        )
+
+
+def get_summarize_service() -> SummarizeLangChainService:
+    """
+    Dependency to provide SummarizeLangChainService instance.
+    Creates a new instance on each request for better error handling and isolation.
+    """
+    try:
+        return SummarizeLangChainService()
+    except Exception as e:
+        logger.error(f"Failed to initialize SummarizeLangChainService: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Summarization service is not available"
         )
