@@ -1,0 +1,13 @@
+Translation:
+The endpoint accepts path to blob text file and optionally, glossary terms (value pairs).
+It uses LangChain platform to do the following:
+1. Read text from the blob file. 
+2. Use GrammarTemplate.txt to correct the grammar and punctuation.
+3. Use TranslationTemplate.txt to Translate the script to the target language.
+4. Use AdjustmentTemplate to quality check and modify the script. 
+5. Return the finale text in the following JSON format:
+{
+   "translatedtext": "<text>",
+   "OriginalSentenceCount":<int>,
+   "translationSentenceCount":"<int>
+}

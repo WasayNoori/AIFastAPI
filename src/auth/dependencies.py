@@ -5,6 +5,8 @@ from ..services.azure_config import AzureKeyVaultConfig
 from ..services.blob_storage_service import BlobStorageService
 from ..translation.translationLangChain import TranslationLangChainService
 from ..translation.summarizeLangChain import SummarizeLangChainService
+from ..translation.deepltranslation import TranslationLangChainService as DeepLTranslationService
+from ..translation.translator import TranslationService
 from typing import Dict, Any
 import logging
 
@@ -64,7 +66,7 @@ def get_translation_service() -> TranslationLangChainService:
     Creates a new instance on each request for better error handling and isolation.
     """
     try:
-        return TranslationLangChainService()
+        return TranslationLangChainService(azure_config)
     except Exception as e:
         logger.error(f"Failed to initialize TranslationLangChainService: {str(e)}")
         raise HTTPException(
@@ -85,4 +87,34 @@ def get_summarize_service() -> SummarizeLangChainService:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Summarization service is not available"
+        )
+
+
+def get_deepl_translation_service() -> DeepLTranslationService:
+    """
+    Dependency to provide DeepL TranslationLangChainService instance.
+    Creates a new instance on each request for better error handling and isolation.
+    """
+    try:
+        return DeepLTranslationService(azure_config)
+    except Exception as e:
+        logger.error(f"Failed to initialize DeepL TranslationService: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="DeepL Translation service is not available"
+        )
+
+
+def get_translation_chain_service() -> TranslationService:
+    """
+    Dependency to provide TranslationService instance (chain-based translation).
+    Creates a new instance on each request for better error handling and isolation.
+    """
+    try:
+        return TranslationService(azure_config)
+    except Exception as e:
+        logger.error(f"Failed to initialize TranslationService: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Translation chain service is not available"
         )

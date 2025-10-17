@@ -15,8 +15,7 @@ class TranslationResult(BaseModel):
     word_count: int
 
 class TranslationLangChainService:
-    def __init__(self):
-        azure_config = AzureKeyVaultConfig("https://aifastapi.vault.azure.net")
+    def __init__(self, azure_config: AzureKeyVaultConfig):
         self.api_key = azure_config.get_secret("openai-key")
         self.chat_model = ChatOpenAI(api_key=self.api_key)
         self.template = Path("src/translation/prompts/translatorprompt.txt").read_text()

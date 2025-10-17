@@ -10,5 +10,14 @@ langchain[llms]
 azure-storage-blob
 azure-keyvault-secrets
 azure-identity
-
+langchain-google-genai
+langchain-openai
+langchain-community
+langchain.output_parsers.json
+langchain_core.output_parsers
+langchain_core.runnables
+langchain_core.prompts
+langchain_core.output_parsers
+langchain_core.runnables
+langchain_core.prompts
 
