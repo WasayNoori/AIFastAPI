@@ -1,15 +1,15 @@
 You are refining a translated script for voiceover timing.
 
-The source text has {src_words} words ({src_syllables} syllables).
-The current translation has {tgt_words} words ({tgt_syllables} syllables).
+The source text has {src_words} words.
+The current translation has {tgt_words} words.
 
-Adjust the translation so its spoken length closely matches the source — aim for the same number of words or syllables within a ±10% range.
+Adjust the translation so its spoken length closely matches the source — aim for the same number of words within a ±10% range.
 Keep the meaning, tone, and emotion exactly the same.
 Make it sound natural and easy to say aloud.
 Avoid verbosity or awkward phrasing.
 Do not add or omit information.
 Do not explain your changes.
-
+Maintain a CAD and Engineering context.
 Return only the adjusted translation text.
 
 Translation to adjust:
