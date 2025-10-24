@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 import logging
 from src.auth.dependencies import get_current_app, get_blob_storage_service, get_translation_service, get_summarize_service, get_deepl_translation_service, get_translation_chain_service
 from src.services.blob_storage_service import BlobStorageService
 from src.translation.translationLangChain import TranslationLangChainService, TranslationResult
 from src.translation.summarizeLangChain import SummarizeLangChainService, SummarizeResult
 from src.translation.deepltranslation import TranslationLangChainService as DeepLTranslationService
-from src.translation.translator import TranslationService, TranslationResult as ChainTranslationResult
+from src.translation.Translator import TranslationService, TranslationResult as ChainTranslationResult
 
 logger = logging.getLogger(__name__)
 
@@ -28,11 +28,11 @@ class SimpleTranslationRequest(BaseModel):
 
 
 class TranslateChainRequest(BaseModel):
-    container_name: str = None  # Optional if blob_path is a full URL
+    container_name: Optional[str] = None  # Optional if blob_path is a full URL
     blob_path: str  # Either relative path or full blob URL
     input_language: str
     output_language: str
-    glossary: Dict[str, str] = None  # Optional glossary
+    glossary: Optional[Dict[str, str]] = None  # Optional glossary
 
 
 @router.post("/translateScript")

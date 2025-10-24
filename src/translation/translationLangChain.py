@@ -88,11 +88,11 @@ class TranslationLangChainService:
 
         # Read the actual blob content
         try:
-            print(f"DEBUG: Attempting to read - Container: '{container_name}', Blob: '{blob_name}'")
+           
             text_content = blob_service.read_text_from_blob(container_name, blob_name)
-            print(f"DEBUG: Successfully read {len(text_content)} characters")
+           
         except Exception as e:
-            print(f"DEBUG: Failed to read blob - Container: '{container_name}', Blob: '{blob_name}', Error: {str(e)}")
+            
             raise ValueError(f"Failed to read blob {blob_path}: {str(e)}")
 
         return self.translate(

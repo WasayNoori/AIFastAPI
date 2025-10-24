@@ -13,3 +13,5 @@ class AIPlatform(ABC):
     
     @abstractmethod
     def generate_text(self,prompt:str)->str:
+        """sends a prompt to the ai and returns generated text"""
+        pass
