@@ -6,7 +6,7 @@ from ..services.blob_storage_service import BlobStorageService
 from ..translation.translationLangChain import TranslationLangChainService
 from ..translation.summarizeLangChain import SummarizeLangChainService
 from ..translation.deepltranslation import TranslationLangChainService as DeepLTranslationService
-from ..translation.Translator import TranslationService
+from ..translation.translator import TranslationService
 from typing import Dict, Any
 import logging
 

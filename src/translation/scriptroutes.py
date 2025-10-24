@@ -7,7 +7,7 @@ from src.services.blob_storage_service import BlobStorageService
 from src.translation.translationLangChain import TranslationLangChainService, TranslationResult
 from src.translation.summarizeLangChain import SummarizeLangChainService, SummarizeResult
 from src.translation.deepltranslation import TranslationLangChainService as DeepLTranslationService
-from src.translation.Translator import TranslationService, TranslationResult as ChainTranslationResult
+from src.translation.translator import TranslationService, TranslationResult as ChainTranslationResult
 
 logger = logging.getLogger(__name__)
 
