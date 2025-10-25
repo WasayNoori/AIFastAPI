@@ -1,13 +1,13 @@
 import os
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from pathlib import Path
 import json
 from typing import Dict
 from pydantic import BaseModel
 from src.services.azure_config import AzureKeyVaultConfig
 from src.services.blob_storage_service import BlobStorageService
+from src.translation.clients import create_llm_provider
 load_dotenv()
 
 class TranslationResult(BaseModel):
@@ -16,8 +16,8 @@ class TranslationResult(BaseModel):
 
 class TranslationLangChainService:
     def __init__(self, azure_config: AzureKeyVaultConfig):
-        self.api_key = azure_config.get_secret("openai-key")
-        self.chat_model = ChatOpenAI(api_key=self.api_key)
+        # Use the LLM provider abstraction instead of direct ChatOpenAI
+        self.llm_provider = create_llm_provider(azure_config)
         self.template = Path("src/translation/prompts/translatorprompt.txt").read_text()
 
         with open("src/translation/prompts/glossary.json", "r", encoding="utf-8") as f:
@@ -36,15 +36,12 @@ class TranslationLangChainService:
         glossary_to_use = custom_glossary if custom_glossary else self.default_glossary
         dict_str = "\n".join([f"{src} → {tgt}" for src, tgt in glossary_to_use.items()])
 
-        messages = self.chat_prompt.format_messages(
-            input_language=input_language,
-            output_language=output_language,
-            dictionary=dict_str,
-            text=text
-        )
-
-        result = self.chat_model.invoke(messages)
-        translated_text = result.content
+        translated_text = self.llm_provider.invoke(self.chat_prompt, {
+            "input_language": input_language,
+            "output_language": output_language,
+            "dictionary": dict_str,
+            "text": text
+        })
         word_count = len(translated_text.split())
 
         return TranslationResult(

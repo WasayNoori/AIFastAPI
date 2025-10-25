@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from pathlib import Path
 import json
 import re
@@ -11,6 +10,7 @@ from urllib.parse import urlparse
 from src.services.azure_config import AzureKeyVaultConfig
 from src.services.blob_storage_service import BlobStorageService
 from src.translation.text_metrics import word_count, syllable_count_en
+from src.translation.clients import create_llm_provider
 load_dotenv()
 
 class TranslationResult(BaseModel):
@@ -20,8 +20,8 @@ class TranslationResult(BaseModel):
 
 class TranslationService:
     def __init__(self, azure_config: AzureKeyVaultConfig):
-        self.api_key = azure_config.get_secret("openai-key")
-        self.chat_model = ChatOpenAI(api_key=self.api_key)
+        # Use the LLM provider abstraction instead of direct ChatOpenAI
+        self.llm_provider = create_llm_provider(azure_config)
         self.blob_service = BlobStorageService()
 
         # Load prompt templates
@@ -48,9 +48,7 @@ class TranslationService:
             ("system", self.grammartemplate.replace("{{input_text}}", "{input_text}")),
             ("human", "{input_text}")
         ])
-        chain = prompt | self.chat_model
-        response = chain.invoke({"input_text": text})
-        return response.content.strip()
+        return self.llm_provider.invoke(prompt, {"input_text": text})
 
     def _translate_text(self, text: str, input_language: str, output_language: str, glossary: Optional[Dict] = None) -> str:
         """Step 3: Translate text using translatorprompt."""
@@ -64,14 +62,12 @@ class TranslationService:
             ("system", self.translationtemplate),
             ("human", "{text}")
         ])
-        chain = prompt | self.chat_model
-        response = chain.invoke({
+        return self.llm_provider.invoke(prompt, {
             "text": text,
             "input_language": input_language,
             "output_language": output_language,
             "dictionary": glossary_str
         })
-        return response.content.strip()
 
     def _adjust_translation(self, source_text: str, translated_text: str) -> str:
         """Step 4: Quality check and adjust translation using adjustmentprompt."""
@@ -85,15 +81,13 @@ class TranslationService:
             ("system", self.adjustmenttemplate),
             ("human", "{translated_text}")
         ])
-        chain = prompt | self.chat_model
-        response = chain.invoke({
+        return self.llm_provider.invoke(prompt, {
             "translated_text": translated_text,
             "src_words": src_words,
             "src_syllables": src_syllables,
             "tgt_words": tgt_words,
             "tgt_syllables": tgt_syllables
         })
-        return response.content.strip()
 
     def _parse_blob_path(self, container_name: Optional[str], blob_path: str) -> Tuple[str, str]:
         """

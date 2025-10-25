@@ -1,6 +1,6 @@
-from langchain.llms import GoogleGenerativeAI
-from langchain.prompts import PromptTemplate
-from langchain.llms import BaseLLM
+from langchain_google_genai import GoogleGenerativeAI
+from langchain_core.prompts import PromptTemplate
+from langchain_core.language_models import BaseLLM
 import os
 import asyncio
 import logging

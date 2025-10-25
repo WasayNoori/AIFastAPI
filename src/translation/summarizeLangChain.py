@@ -1,13 +1,13 @@
 import os
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
 from pathlib import Path
 import json
 from typing import Dict
 from pydantic import BaseModel
 from src.services.azure_config import AzureKeyVaultConfig
 from src.services.blob_storage_service import BlobStorageService
+from src.translation.clients import create_llm_provider
 load_dotenv()
 
 class SummarizeResult(BaseModel):
@@ -16,9 +16,10 @@ class SummarizeResult(BaseModel):
 
 class SummarizeLangChainService:
     def __init__(self):
+        # Create azure_config internally for backward compatibility
         azure_config = AzureKeyVaultConfig("https://aifastapi.vault.azure.net")
-        self.api_key = azure_config.get_secret("openai-key")
-        self.chat_model = ChatOpenAI(api_key=self.api_key)
+        # Use the LLM provider abstraction instead of direct ChatOpenAI
+        self.llm_provider = create_llm_provider(azure_config)
         self.template = Path("src/translation/prompts/summaryprompt.txt").read_text()
 
         self.human_template = "{lesson_text}"
@@ -37,11 +38,9 @@ class SummarizeLangChainService:
         Returns:
             SummarizeResult with summarized_text and action_items
         """
-        messages = self.chat_prompt.format_messages(lesson_text=text)
-        result = self.chat_model.invoke(messages)
+        content = self.llm_provider.invoke(self.chat_prompt, {"lesson_text": text})
 
         # Parse the result - expecting two paragraphs
-        content = result.content.strip()
         paragraphs = content.split('\n\n', 1)
 
         if len(paragraphs) == 2:

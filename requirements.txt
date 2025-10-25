@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 gunicorn
 pydantic
+pydantic-settings
 google-generativeai
 slowapi
 pyjwt

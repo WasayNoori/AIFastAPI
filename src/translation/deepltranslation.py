@@ -8,10 +8,8 @@ from pydantic import BaseModel
 from src.services.azure_config import AzureKeyVaultConfig
 from src.services.blob_storage_service import BlobStorageService
 import langchain_google_genai
-import langchain.output_parsers.json
 from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 load_dotenv()
