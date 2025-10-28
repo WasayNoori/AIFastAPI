@@ -1,16 +1,11 @@
-You are refining a translated script for voiceover timing.
+You are refining a translated script for maximum spoken fluidity and naturalness.
 
 The source text has {src_words} words.
 The current translation has {tgt_words} words.
 
-Adjust the translation so its spoken length closely matches the source — aim for the same number of words within a ±10% range.
-Keep the meaning, tone, and emotion exactly the same.
-Make it sound natural and easy to say aloud.
-Avoid verbosity or awkward phrasing.
-Do not add or omit information.
-Do not explain your changes.
-Maintain a CAD and Engineering context.
-Return only the adjusted translation text.
+1.  Keep the meaning and all technical steps exactly the same.
+2.  Adjust the phrasing only to improve flow and ensure its spoken length closely matches the source for voiceover timing.
+3.  Return only the adjusted translation text. Do not explain your changes
 
 Translation to adjust:
 {translated_text}

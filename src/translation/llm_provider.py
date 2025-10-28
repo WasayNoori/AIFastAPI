@@ -37,6 +37,11 @@ class LLMProvider(ABC):
         pass
 
     @abstractmethod
+    def get_provider_name(self) -> str:
+        """Return the provider name (e.g., 'openai', 'gemini')."""
+        pass
+
+    @abstractmethod
     def create_client(self) -> BaseChatModel:
         """Create and return the LangChain chat model client."""
         pass
@@ -70,6 +75,9 @@ class OpenAIProvider(LLMProvider):
     def get_default_model(self) -> str:
         return "gpt-4o"
 
+    def get_provider_name(self) -> str:
+        return "openai"
+
     def create_client(self) -> BaseChatModel:
         return ChatOpenAI(
             api_key=self.api_key,
@@ -83,7 +91,10 @@ class GeminiProvider(LLMProvider):
     """Google Gemini LLM provider."""
 
     def get_default_model(self) -> str:
-        return "gemini-1.5-pro"
+        return "gemini-2.5-flash"
+
+    def get_provider_name(self) -> str:
+        return "gemini"
 
     def create_client(self) -> BaseChatModel:
         return ChatGoogleGenerativeAI(

@@ -1,4 +1,5 @@
 import os
+import time
 from dotenv import load_dotenv
 from langchain_core.prompts import ChatPromptTemplate
 from pathlib import Path
@@ -17,11 +18,26 @@ class TranslationResult(BaseModel):
     translatedtext: str
     OriginalSentenceCount: int
     translationSentenceCount: int
+    grammar_correction_time_seconds: float
+    translation_time_seconds: float
+    adjustment_time_seconds: float
+    total_time_seconds: float
+    grammar_llm_provider: str
+    grammar_llm_model: str
+    translation_llm_provider: str
+    translation_llm_model: str
+    adjustment_llm_provider: str
+    adjustment_llm_model: str
 
 class TranslationService:
     def __init__(self, azure_config: AzureKeyVaultConfig):
-        # Use the LLM provider abstraction instead of direct ChatOpenAI
-        self.llm_provider = create_llm_provider(azure_config)
+        # Create step-specific LLM providers for each translation pipeline step
+        # This allows using different models/providers for grammar, translation, and adjustment
+        # E.g., Gemini Flash for grammar, Gemini Pro for translation, GPT-4o for adjustment
+        self.grammar_provider = create_llm_provider(azure_config, step="grammar")
+        self.translation_provider = create_llm_provider(azure_config, step="translation")
+        self.adjustment_provider = create_llm_provider(azure_config, step="adjustment")
+
         self.blob_service = BlobStorageService()
 
         # Load prompt templates
@@ -48,7 +64,7 @@ class TranslationService:
             ("system", self.grammartemplate.replace("{{input_text}}", "{input_text}")),
             ("human", "{input_text}")
         ])
-        return self.llm_provider.invoke(prompt, {"input_text": text})
+        return self.grammar_provider.invoke(prompt, {"input_text": text})
 
     def _translate_text(self, text: str, input_language: str, output_language: str, glossary: Optional[Dict] = None) -> str:
         """Step 3: Translate text using translatorprompt."""
@@ -62,7 +78,7 @@ class TranslationService:
             ("system", self.translationtemplate),
             ("human", "{text}")
         ])
-        return self.llm_provider.invoke(prompt, {
+        return self.translation_provider.invoke(prompt, {
             "text": text,
             "input_language": input_language,
             "output_language": output_language,
@@ -81,7 +97,7 @@ class TranslationService:
             ("system", self.adjustmenttemplate),
             ("human", "{translated_text}")
         ])
-        return self.llm_provider.invoke(prompt, {
+        return self.adjustment_provider.invoke(prompt, {
             "translated_text": translated_text,
             "src_words": src_words,
             "src_syllables": src_syllables,
@@ -145,27 +161,49 @@ class TranslationService:
             # Using full URL
             translate_from_blob(None, "https://account.blob.core.windows.net/mycontainer/folder/file.txt", "EN", "FR")
         """
+        # Start total timer
+        total_start_time = time.time()
+
         # Step 1: Parse blob path to get container and blob path
         parsed_container, parsed_blob_path = self._parse_blob_path(container_name, blob_path)
 
         # Step 2: Read text from blob
         original_text = self.blob_service.read_text_from_blob(parsed_container, parsed_blob_path)
 
-        # Step 2: Correct grammar and punctuation
+        # Step 3: Correct grammar and punctuation (with timing)
+        grammar_start_time = time.time()
         corrected_text = self._correct_grammar(original_text)
+        grammar_time = time.time() - grammar_start_time
 
-        # Step 3: Translate to target language
+        # Step 4: Translate to target language (with timing)
+        translation_start_time = time.time()
         translated_text = self._translate_text(corrected_text, input_language, output_language, glossary)
+        translation_time = time.time() - translation_start_time
 
-        # Step 4: Quality check and adjust
+        # Step 5: Quality check and adjust (with timing)
+        adjustment_start_time = time.time()
         final_text = self._adjust_translation(corrected_text, translated_text)
+        adjustment_time = time.time() - adjustment_start_time
 
-        # Step 5: Count sentences and return result
+        # Calculate total time
+        total_time = time.time() - total_start_time
+
+        # Step 6: Count sentences and return result
         original_sentence_count = self._count_sentences(original_text)
         translated_sentence_count = self._count_sentences(final_text)
 
         return TranslationResult(
             translatedtext=final_text,
             OriginalSentenceCount=original_sentence_count,
-            translationSentenceCount=translated_sentence_count
+            translationSentenceCount=translated_sentence_count,
+            grammar_correction_time_seconds=round(grammar_time, 3),
+            translation_time_seconds=round(translation_time, 3),
+            adjustment_time_seconds=round(adjustment_time, 3),
+            total_time_seconds=round(total_time, 3),
+            grammar_llm_provider=self.grammar_provider.get_provider_name(),
+            grammar_llm_model=self.grammar_provider.model,
+            translation_llm_provider=self.translation_provider.get_provider_name(),
+            translation_llm_model=self.translation_provider.model,
+            adjustment_llm_provider=self.adjustment_provider.get_provider_name(),
+            adjustment_llm_model=self.adjustment_provider.model
         )
