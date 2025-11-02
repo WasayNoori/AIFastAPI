@@ -8,6 +8,7 @@ from src.translation.translationLangChain import TranslationLangChainService, Tr
 from src.translation.summarizeLangChain import SummarizeLangChainService, SummarizeResult
 from src.translation.deepltranslation import TranslationLangChainService as DeepLTranslationService
 from src.translation.translator import TranslationService, TranslationResult as ChainTranslationResult
+from src.translation.sentencesplitter import split_text
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,11 @@ class TranslateChainRequest(BaseModel):
     input_language: str
     output_language: str
     glossary: Optional[Dict[str, str]] = None  # Optional glossary
+
+
+class AnalyzeTextRequest(BaseModel):
+    text: str
+    language: str = "en"  # Language code: 'en', 'fr', or 'de'
 
 
 @router.post("/translateScript")
@@ -81,9 +87,48 @@ async def translate_script(
             detail=f"Failed to translate script: {str(e)}"
         )
 
-
-@router.post("/translationtest")
-async def translation_test(
+@router.post("/analyzetext")
+async def analyzetext(
+    request: AnalyzeTextRequest,
+    current_user = Depends(get_current_app)
+):
+    """
+    Analyze text by splitting it into sentences using the sentence splitter service.
+    
+    Args:
+        request: Contains text and language code
+        current_user: Authenticated user
+    
+    Returns:
+        JSON with sentenceCount and sentences array
+    """
+    try:
+        # Use the sentence splitter to split text into sentences
+        sentences = split_text(request.text, request.language)
+        
+        # Format sentences as numbered list
+        formatted_sentences = [f"{s.Number}. {s.Text}" for s in sentences]
+        
+        return {
+            "sentenceCount": len(sentences),
+            "sentences": formatted_sentences
+        }
+    except ValueError as e:
+        # Handle unsupported language errors
+        logger.error(f"Unsupported language: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Text analysis failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to analyze text: {str(e)}"
+        )
+        
+@router.post("/deepltranslate")
+async def deepltranslate(
     request: SimpleTranslationRequest,
     current_user = Depends(get_current_app),
     deepl_service: DeepLTranslationService = Depends(get_deepl_translation_service)
@@ -108,9 +153,8 @@ async def translation_test(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to translate text: {str(e)}"
-        )       
+        )
 
-    
 
 @router.post("/summarizeScript")
 async def summarize_script(

@@ -3,9 +3,9 @@ You are refining a translated script for maximum spoken fluidity and naturalness
 The source text has {src_words} words.
 The current translation has {tgt_words} words.
 
-1.  Keep the meaning and all technical steps exactly the same.
-2.  Adjust the phrasing only to improve flow and ensure its spoken length closely matches the source for voiceover timing.
-3.  Return only the adjusted translation text. Do not explain your changes
+-If the translation has more or fewer sentences than the original, merge or rephrase to keep the same number of sentences.
+-Adjust the phrasing only to improve flow and ensure its spoken length closely matches the source for voiceover timing.
+-Return only the adjusted translation text. Do not explain your changes
 
 Translation to adjust:
 {translated_text}
