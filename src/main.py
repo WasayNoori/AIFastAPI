@@ -9,6 +9,7 @@ from src.services.blob_storage_service import BlobStorageService
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from src.translation.scriptroutes import router as script_router
+from src.Quizzes.quiz_routes import router as quiz_router
 import logging
 
 
@@ -35,7 +36,8 @@ class ListBlobsRequest(BaseModel):
 
 app = FastAPI()
 app.include_router(script_router)
-#GET,POST,PUT,DELET
+app.include_router(quiz_router)
+#GET,POST,PUT,DELETE
 @app.get("/")
 def index():
     try:

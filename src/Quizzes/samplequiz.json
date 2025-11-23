@@ -1,0 +1,131 @@
+[
+    {
+      "text": "What is the first tool discussed in the Sketch section?",
+      "category": "Sketch Tools",
+      "difficulty": 1,
+      "imageUrl": "",
+      "tags": "line, sketch, tools",
+      "options": [
+        {
+          "text": "Centerline Tool",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "Midpoint Line Tool",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "Line Tool",
+          "isCorrect": true,
+          "imageUrl": ""
+        },
+        {
+          "text": "Select Tool",
+          "isCorrect": false,
+          "imageUrl": ""
+        }
+      ]
+    },
+    {
+      "text": "How can you activate the Line tool aside from clicking the main icon?",
+      "category": "Sketch Tools",
+      "difficulty": 2,
+      "imageUrl": "",
+      "tags": "line, sketch, activation",
+      "options": [
+        {
+          "text": "By pressing the 'L' key",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "By right-clicking in the graphics area",
+          "isCorrect": true,
+          "imageUrl": ""
+        },
+        {
+          "text": "By clicking on the 'Tools' menu only",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "By holding the left mouse button",
+          "isCorrect": false,
+          "imageUrl": ""
+        }
+      ]
+    },
+    {
+      "text": "What happens when you double-click while using the Line tool?",
+      "category": "Sketch Tools",
+      "difficulty": 2,
+      "imageUrl": "",
+      "tags": "line, sketch, double-click",
+      "options": [
+        {
+          "text": "You create a new sketch",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "The last point becomes the end of the line chain",
+          "isCorrect": true,
+          "imageUrl": ""
+        },
+        {
+          "text": "It automatically deletes all lines",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "You cannot use any other tools",
+          "isCorrect": false,
+          "imageUrl": ""
+        }
+      ]
+    },
+    {
+      "text": "Which method is NOT mentioned for ending a chain of lines?",
+      "category": "Sketch Tools",
+      "difficulty": 2,
+      "imageUrl": "",
+      "tags": "line, sketch, ending chain",
+      "options": [
+        {
+          "text": "Right-click and select 'End Chain'",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "Double-click",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+          "text": "Hit the Escape key",
+          "isCorrect": true,
+          "imageUrl": ""
+        },
+        {
+          "text": "Select 'End Chain' from a pop-up menu",
+          "isCorrect": false,
+          "imageUrl": ""
+        }
+      ]
+    },
+    {
+      "text": "What is the first step to delete sketch items in SOLIDWORKS?",
+      "category": "Sketch Tools",
+      "difficulty": 1,
+      "imageUrl": "",
+      "tags": "deleting, sketch, items",
+      "options": [
+        {
+          "text": "Press the Delete key immediately",
+          "isCorrect": false,
+          "imageUrl": ""
+        },
+        {
+   

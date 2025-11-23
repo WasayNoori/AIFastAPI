@@ -12,12 +12,10 @@ azure-keyvault-secrets
 azure-identity
 python-dotenv
 azure-storage-blob
+httpx
 
 # NLP and text processing
-spacy==3.7.6
-https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
-https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
-https://github.com/explosion/spacy-models/releases/download/de_core_news_sm-3.7.0/de_core_news_sm-3.7.0-py3-none-any.whl
+spacy>=3.8.0
 
 # LangChain dependencies
 langchain==0.3.27

@@ -1,0 +1,34 @@
+[
+    {
+      "text": "Which programming language is known for its use in web development and has a logo featuring a coffee cup?",
+      "category": "Technology",
+      "difficulty": 2,
+      "productId": null,
+      "createdById": null,
+      "imageUrl": "https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Java_programming_language_logo.svg/131px-Java_programming_language_logo.svg.png",
+      "tags": "programming, java, web-development, technology",
+      "languageId": 1,
+      "options": [
+        {
+          "text": "Java",
+          "isCorrect": true,
+          "imageUrl": "https://logos-world.net/wp-content/uploads/2022/07/Java-Logo.png"
+        },
+        {
+          "text": "Python",
+          "isCorrect": false,
+          "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/121px-Python-logo-notext.svg.png"
+        },
+        {
+          "text": "JavaScript",
+          "isCorrect": false,
+          "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Unofficial_JavaScript_logo_2.svg/120px-Unofficial_JavaScript_logo_2.svg.png"
+        },
+        {
+          "text": "C++",
+          "isCorrect": false,
+          "imageUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/ISO_C%2B%2B_Logo.svg/120px-ISO_C%2B%2B_Logo.svg.png"
+        }
+      ]
+    }
+  ] 

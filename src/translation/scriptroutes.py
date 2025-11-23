@@ -2,13 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
 import logging
-from src.auth.dependencies import get_current_app, get_blob_storage_service, get_translation_service, get_summarize_service, get_deepl_translation_service, get_translation_chain_service
+from pathlib import Path
+from langchain_core.prompts import ChatPromptTemplate
+from src.auth.dependencies import get_current_app, get_blob_storage_service, get_translation_service, get_summarize_service, get_deepl_translation_service, get_translation_chain_service, get_azure_config, get_workflow_translation_service
 from src.services.blob_storage_service import BlobStorageService
+from src.services.azure_config import AzureKeyVaultConfig
 from src.translation.translationLangChain import TranslationLangChainService, TranslationResult
 from src.translation.summarizeLangChain import SummarizeLangChainService, SummarizeResult
 from src.translation.deepltranslation import TranslationLangChainService as DeepLTranslationService
 from src.translation.translator import TranslationService, TranslationResult as ChainTranslationResult
 from src.translation.sentencesplitter import split_text
+from src.translation.clients import create_llm_provider
+from src.translation.workflow_translation_service import WorkflowTranslationService, CompleteWorkflowResult
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +30,6 @@ class SummarizeScriptRequest(BaseModel):
 
 class SimpleTranslationRequest(BaseModel):
     text: str
-    target_language: str = "FR"  # Default to French
 
 
 class TranslateChainRequest(BaseModel):
@@ -39,6 +43,23 @@ class TranslateChainRequest(BaseModel):
 class AnalyzeTextRequest(BaseModel):
     text: str
     language: str = "en"  # Language code: 'en', 'fr', or 'de'
+    correct_grammar: bool = False  # Whether to apply grammar correction before splitting
+
+
+class WorkflowTranslationRequest(BaseModel):
+    text: str
+    source_language: str = "en"  # Language code for sentence splitting
+    target_language: str = "FR"  # Target language for DeepL translation
+    correct_grammar: bool = True  # Whether to apply grammar correction
+
+
+class SaveTextRequest(BaseModel):
+    text: str
+    file_path: str  # Path where to save the file
+
+
+class LoadTextRequest(BaseModel):
+    file_path: str  # Path to the file to load
 
 
 @router.post("/translateScript")
@@ -90,25 +111,45 @@ async def translate_script(
 @router.post("/analyzetext")
 async def analyzetext(
     request: AnalyzeTextRequest,
-    current_user = Depends(get_current_app)
+    current_user = Depends(get_current_app),
+    azure_config: AzureKeyVaultConfig = Depends(get_azure_config)
 ):
     """
-    Analyze text by splitting it into sentences using the sentence splitter service.
-    
+    Analyze text by optionally correcting grammar, then splitting it into sentences.
+
     Args:
-        request: Contains text and language code
+        request: Contains text, language code, and correct_grammar flag
         current_user: Authenticated user
-    
+        azure_config: Azure configuration for LLM provider
+
     Returns:
         JSON with sentenceCount and sentences array
     """
     try:
-        # Use the sentence splitter to split text into sentences
-        sentences = split_text(request.text, request.language)
-        
+        # Determine which text to use based on correct_grammar flag
+        text_to_analyze = request.text
+
+        # Step 1: Optionally correct grammar if requested
+        if request.correct_grammar:
+            # Create grammar provider
+            grammar_provider = create_llm_provider(azure_config, step="grammar")
+
+            # Load grammar template
+            grammartemplate = Path("src/translation/prompts/grammartemplate.txt").read_text()
+
+            # Correct grammar using the grammar provider
+            prompt = ChatPromptTemplate.from_messages([
+                ("system", grammartemplate.replace("{{input_text}}", "{input_text}")),
+                ("human", "{input_text}")
+            ])
+            text_to_analyze = grammar_provider.invoke(prompt, {"input_text": request.text})
+
+        # Step 2: Use the sentence splitter to split text into sentences
+        sentences = split_text(text_to_analyze, request.language)
+
         # Format sentences as numbered list
         formatted_sentences = [f"{s.Number}. {s.Text}" for s in sentences]
-        
+
         return {
             "sentenceCount": len(sentences),
             "sentences": formatted_sentences
@@ -134,22 +175,23 @@ async def deepltranslate(
     deepl_service: DeepLTranslationService = Depends(get_deepl_translation_service)
 ):
     """
-    Test endpoint to translate a simple phrase using DeepL API.
+    Translate text using DeepL API.
+    Uses source/target languages, context, and glossary from service configuration.
     """
     try:
-        # Call the translate_deepl method from DeepL service
-        result = deepl_service.translate_deepl(request.text, request.target_language)
+        # Call translate_deepl - uses service defaults for source_lang, target_lang, context, glossary_id
+        result = deepl_service.translate_deepl(request.text)
 
         return {
             "status": "success",
             "original_text": request.text,
-            "target_language": request.target_language,
-            "translated_text": result,
+            "translated_text": result["translated_text"],
+            "debug": result["debug"],
             "processed_by": current_user.get("sub", "unknown")
         }
-        
+
     except Exception as e:
-        logger.error(f"DeepL translation test failed: {str(e)}")
+        logger.error(f"DeepL translation failed: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to translate text: {str(e)}"
@@ -290,4 +332,252 @@ async def translate_chain(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to translate using chain: {str(e)}"
+        )
+
+
+# ============================================================================
+# Workflow Translation Endpoints
+# ============================================================================
+
+@router.post("/workflow/complete")
+async def workflow_complete_translation(
+    request: WorkflowTranslationRequest,
+    current_user = Depends(get_current_app),
+    workflow_service: WorkflowTranslationService = Depends(get_workflow_translation_service)
+):
+    """
+    Execute the complete translation workflow:
+    1. Load and analyze original text
+    2. Correct grammar and split into sentences
+    3. Translate using DeepL
+
+    Args:
+        request: Contains text, source/target languages, and grammar correction flag
+        current_user: Authenticated user
+        workflow_service: Workflow translation service
+
+    Returns:
+        Complete workflow results with all steps
+    """
+    try:
+        result = workflow_service.execute_complete_workflow(
+            original_text=request.text,
+            language=request.source_language,
+            target_language=request.target_language,
+            correct_grammar=request.correct_grammar
+        )
+
+        return {
+            "status": "success",
+            "workflow_result": {
+                "original": {
+                    "text": result.step1_original.original_text,
+                    "char_count": result.step1_original.char_count,
+                    "word_count": result.step1_original.word_count
+                },
+                "corrected_and_split": {
+                    "corrected_text": result.step2_corrected.corrected_text,
+                    "sentences": result.step2_corrected.sentences,
+                    "sentence_count": result.step2_corrected.sentence_count,
+                    "grammar_correction_applied": result.step2_corrected.grammar_correction_applied
+                },
+                "translated": {
+                    "translated_text": result.step3_translated.translated_text,
+                    "source_language": result.step3_translated.source_language,
+                    "target_language": result.step3_translated.target_language,
+                    "translated_sentence_count": result.step3_translated.translated_sentence_count
+                },
+                "workflow_completed": result.workflow_completed,
+                "processed_by": current_user.get("sub", "unknown")
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Workflow translation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to execute workflow: {str(e)}"
+        )
+
+
+@router.post("/workflow/step1/load")
+async def workflow_step1_load_text(
+    request: WorkflowTranslationRequest,
+    current_user = Depends(get_current_app),
+    workflow_service: WorkflowTranslationService = Depends(get_workflow_translation_service)
+):
+    """
+    Step 1: Load and analyze text
+
+    Args:
+        request: Contains the text to load
+        current_user: Authenticated user
+        workflow_service: Workflow translation service
+
+    Returns:
+        Original text with character and word counts
+    """
+    try:
+        result = workflow_service.step1_load_text(request.text)
+
+        return {
+            "status": "success",
+            "result": {
+                "original_text": result.original_text,
+                "char_count": result.char_count,
+                "word_count": result.word_count
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Step 1 failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load text: {str(e)}"
+        )
+
+
+@router.post("/workflow/step2/correct-and-split")
+async def workflow_step2_correct_and_split(
+    request: WorkflowTranslationRequest,
+    current_user = Depends(get_current_app),
+    workflow_service: WorkflowTranslationService = Depends(get_workflow_translation_service)
+):
+    """
+    Step 2: Correct grammar and split into sentences
+
+    Args:
+        request: Contains text, language, and grammar correction flag
+        current_user: Authenticated user
+        workflow_service: Workflow translation service
+
+    Returns:
+        Corrected text and sentence list
+    """
+    try:
+        result = workflow_service.step2_correct_and_split(
+            text=request.text,
+            language=request.source_language,
+            correct_grammar=request.correct_grammar
+        )
+
+        return {
+            "status": "success",
+            "result": {
+                "corrected_text": result.corrected_text,
+                "sentences": result.sentences,
+                "sentence_count": result.sentence_count,
+                "grammar_correction_applied": result.grammar_correction_applied
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Step 2 failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to correct and split text: {str(e)}"
+        )
+
+
+@router.post("/workflow/step3/translate")
+async def workflow_step3_translate(
+    request: WorkflowTranslationRequest,
+    current_user = Depends(get_current_app),
+    workflow_service: WorkflowTranslationService = Depends(get_workflow_translation_service)
+):
+    """
+    Step 3: Translate text using DeepL
+
+    Args:
+        request: Contains text and target language
+        current_user: Authenticated user
+        workflow_service: Workflow translation service
+
+    Returns:
+        Translated text
+    """
+    try:
+        result = workflow_service.step3_translate(
+            text=request.text,
+            target_language=request.target_language
+        )
+
+        return {
+            "status": "success",
+            "result": {
+                "translated_text": result.translated_text,
+                "source_language": result.source_language,
+                "target_language": result.target_language,
+                "translated_sentence_count": result.translated_sentence_count
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Step 3 failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to translate text: {str(e)}"
+        )
+
+
+@router.post("/workflow/save-file")
+async def workflow_save_file(
+    request: SaveTextRequest,
+    current_user = Depends(get_current_app),
+    workflow_service: WorkflowTranslationService = Depends(get_workflow_translation_service)
+):
+    """
+    Save text to a file
+
+    Args:
+        request: Contains text and file path
+        current_user: Authenticated user
+        workflow_service: Workflow translation service
+
+    Returns:
+        Save status and file path
+    """
+    try:
+        result = workflow_service.save_text_to_file(
+            text=request.text,
+            file_path=request.file_path
+        )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Save file failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to save file: {str(e)}"
+        )
+
+
+@router.post("/workflow/load-file")
+async def workflow_load_file(
+    request: LoadTextRequest,
+    current_user = Depends(get_current_app),
+    workflow_service: WorkflowTranslationService = Depends(get_workflow_translation_service)
+):
+    """
+    Load text from a file
+
+    Args:
+        request: Contains file path
+        current_user: Authenticated user
+        workflow_service: Workflow translation service
+
+    Returns:
+        File content and metadata
+    """
+    try:
+        result = workflow_service.load_text_from_file(request.file_path)
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Load file failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to load file: {str(e)}"
         )

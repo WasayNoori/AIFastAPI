@@ -7,6 +7,8 @@ from ..translation.translationLangChain import TranslationLangChainService
 from ..translation.summarizeLangChain import SummarizeLangChainService
 from ..translation.deepltranslation import TranslationLangChainService as DeepLTranslationService
 from ..translation.translator import TranslationService
+from ..translation.workflow_translation_service import WorkflowTranslationService
+from ..Quizzes.quiz_service import QuizGenerationService
 from typing import Dict, Any
 import logging
 
@@ -117,4 +119,42 @@ def get_translation_chain_service() -> TranslationService:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Translation chain service is not available"
+        )
+
+
+def get_azure_config() -> AzureKeyVaultConfig:
+    """
+    Dependency to provide AzureKeyVaultConfig instance.
+    Returns the globally initialized azure_config.
+    """
+    return azure_config
+
+
+def get_workflow_translation_service() -> WorkflowTranslationService:
+    """
+    Dependency to provide WorkflowTranslationService instance.
+    Creates a new instance on each request for better error handling and isolation.
+    """
+    try:
+        return WorkflowTranslationService(azure_config)
+    except Exception as e:
+        logger.error(f"Failed to initialize WorkflowTranslationService: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Workflow translation service is not available"
+        )
+
+
+def get_quiz_service() -> QuizGenerationService:
+    """
+    Dependency to provide QuizGenerationService instance.
+    Creates a new instance on each request for better error handling and isolation.
+    """
+    try:
+        return QuizGenerationService(azure_config)
+    except Exception as e:
+        logger.error(f"Failed to initialize QuizGenerationService: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Quiz generation service is not available: {str(e)}"
         )
